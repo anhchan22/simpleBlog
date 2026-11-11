@@ -1,16 +1,34 @@
-﻿import { useState } from "react";
-import { useForm } from "react-hook-form";
+﻿import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { BlogPosts } from "../data/blogPosts";
 export function Post() {
-    const { slug } = useParams()
-    const post = BlogPosts[slug]
-    if (!post) {
-        return <h2>The blog post you've requested doesn't exist.</h2>;
-    }
+    const { slug } = useParams();
+    const [post, setPost] = useState([])
+    const [err, setErr] = useState("")
+    const [status, setStatus] = useState("loading")
+    useEffect(() => {
+        async function loadPost() {
+            try {
+                const response = await fetch(`http://localhost:3000/posts/${slug}`);
+                if (!response.ok) {
+                    throw new Error("BE đang gặp lỗi.");
+                }
+
+                const result = await response.json();
+                console.log(result.data)
+                setPost(result.data);
+                setStatus("success")
+            } catch {
+                setErr("Khong tai duoc bai viet. Kiem tra BE.")
+                setStatus("error")
+            }
+        }
+        loadPost();
+    }, [slug]);
 
     return (
         <div>
+            {status=="loading" && <p>Dang tai bai viet...</p>}
+            {status=="error" && <p>{err}</p>}
             <h3>{post.title}</h3>
             <p>{post.description}</p>
         </div>
