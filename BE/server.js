@@ -79,6 +79,41 @@ app.get("/posts/:slug", function(req, res){
     })
 })
 
+app.put("/posts/:slug", function(req, res){
+    const post = blogPosts.find((item) => item.slug == req.params.slug)
+    if(!post){
+        return res.status(404).json({ 
+            message: "Khong tim thay post" 
+        })
+    }
+
+    const { title, description } = req.body
+    if(!title || !description){
+        return res.status(400).json({ 
+            message: "Title va description la bat buoc" 
+        })
+    }
+
+    post.title = title
+    post.description = description
+    res.json({ 
+        message: "Cap nhat post thanh cong", 
+        data: post })
+})
+
+app.delete("/posts/:slug", function(req, res){
+    const index = blogPosts.findIndex((item) => item.slug == req.params.slug)
+    if(index === -1){
+        return res.status(404).json({ 
+            message: "Khong tim thay post" 
+        })
+    }
+
+    blogPosts.splice(index, 1)
+    res.json({ 
+        message: "Xoa post thanh cong" 
+    })
+})
 
 app.post("/posts", function(req, res){
     const {slug, title, description} = req.body

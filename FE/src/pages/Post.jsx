@@ -1,138 +1,109 @@
-﻿import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+﻿import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+
 export function Post() {
     const { slug } = useParams();
-    const [post, setPost] = useState([])
-    const [err, setErr] = useState("")
-    const [status, setStatus] = useState("loading")
+    const navigate = useNavigate();
+    const [post, setPost] = useState(null);
+    const [form, setForm] = useState({ title: "", description: "" });
+    const [isEditing, setIsEditing] = useState(false);
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         async function loadPost() {
             try {
                 const response = await fetch(`http://localhost:3000/posts/${slug}`);
-                if (!response.ok) {
-                    throw new Error("BE đang gặp lỗi.");
-                }
-
                 const result = await response.json();
-                console.log(result.data)
+                if (!response.ok) throw new Error("Không tải được bài viết.");
+
                 setPost(result.data);
-                setStatus("success")
-            } catch {
-                setErr("Khong tai duoc bai viet. Kiem tra BE.")
-                setStatus("error")
+                setForm({
+                    title: result.data.title,
+                    description: result.data.description,
+                });
+            } catch (error) {
+                console.error("Không tải được bài viết:", error);
+            } finally {
+                setLoading(false);
             }
         }
         loadPost();
     }, [slug]);
 
+    function handleChange(event) {
+        const { name, value } = event.target;
+        setForm({ ...form, [name]: value });
+    }
+
+    async function updatePost(event) {
+        event.preventDefault();
+        try {
+            const response = await fetch(`http://localhost:3000/posts/${slug}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(form),
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error("Không cập nhật được bài viết.");
+
+            setPost(result.data);
+            setForm({
+                title: result.data.title,
+                description: result.data.description,
+            });
+            setIsEditing(false);
+        } catch (error) {
+            console.error("Không cập nhật được bài viết:", error);
+        }
+    }
+
+    async function deletePost() {
+        try {
+            const response = await fetch(`http://localhost:3000/posts/${slug}`, {
+                method: "DELETE",
+            });
+            if (!response.ok) throw new Error("Không xóa được bài viết.");
+
+            navigate("/posts");
+        } catch (error) {
+            console.error("Không xóa được bài viết:", error);
+        }
+    }
+
+    if (loading) return <p>Đang tải bài viết...</p>;
+    if (!post) return <p>Không tìm thấy bài viết.</p>;
+
     return (
-        <div>
-            {status=="loading" && <p>Dang tai bai viet...</p>}
-            {status=="error" && <p>{err}</p>}
-            <h3>{post.title}</h3>
-            <p>{post.description}</p>
-        </div>
-    )
+        <main>
+            {isEditing ? (
+                <form onSubmit={updatePost}>
+                    <label>Tiêu đề: </label>
+                    <input
+                        name="title"
+                        value={form.title}
+                        onChange={handleChange}
+                        required
+                    />
+                    <br />
+                    <label>Mô tả: </label>
+                    <textarea
+                        name="description"
+                        value={form.description}
+                        onChange={handleChange}
+                        required
+                    />
+                    <br />
+                    <button type="submit">Lưu</button>
+                    <button type="button" onClick={() => setIsEditing(false)}>Hủy</button>
+                </form>
+            ) : (
+                <>
+                    <h3>{post.title}</h3>
+                    <p>{post.description}</p>
+                    <button type="button" onClick={() => setIsEditing(true)}>Sửa</button>
+                    <button type="button" onClick={deletePost}>Xóa</button>
+                </>
+            )}
+        </main>
+    );
 }
-// export function Post() {
-//   const [showForm, setShowForm] = useState(true);
-//   const { register, handleSubmit, reset } = useForm();
-
-//   function onSubmit(data) {
-//     alert(`Bài viết "${data.title}" đã được tạo!`);
-//     reset();
-//   }
-
-//   return (
-//     <>
-//       <h3>Tạo bài viết mới</h3>
-//       <button onClick={() => setShowForm(!showForm)}>
-//         {showForm ? "Ẩn form" : "Hiện form"}
-//       </button>
-
-//       {showForm && (
-//         <form onSubmit={handleSubmit(onSubmit)}>
-//           <p>
-//             <label>Tiêu đề: </label>
-//             <input {...register("title", { required: true })} />
-//           </p>
-
-//           <p>
-//             <label>Danh mục: </label>
-//             <select {...register("category")}>
-//               <option>Công nghệ</option>
-//               <option>Học tập</option>
-//               <option>Đời sống</option>
-//             </select>
-//           </p>
-
-//           <p>
-//             <label>Nội dung: </label>
-//             <textarea {...register("content", { required: true })} />
-//           </p>
-
-//           <button type="submit">Tạo bài viết</button>
-//         </form>
-//       )}
-//     </>
-//   );
-// }
-
-// export function Post() {
-//   const [showForm, setShowForm] = useState(true);
-//   const [title, setTitle] = useState("");
-//   const [category, setCategory] = useState("Công nghệ");
-//   const [content, setContent] = useState("");
-
-//   function handleSubmit(event) {
-//     event.preventDefault();
-//     alert(`Bài viết "${title}" đã được tạo!`);
-//     setTitle("");
-//     setContent("");
-//   }
-
-//   return (
-//     <>
-//       <h3>Tạo bài viết mới</h3>
-//       <button type="button" onClick={() => setShowForm(!showForm)}>
-//         {showForm ? "Ẩn form" : "Hiện form"}
-//       </button>
-
-//       {showForm && (
-//         <form onSubmit={handleSubmit}>
-//           <p>
-//             <label>Tiêu đề: </label>
-//             <input
-//               value={title}
-//               onChange={(event) => setTitle(event.target.value)}
-//               required
-//             />
-//           </p>
-
-//           <p>
-//             <label>Danh mục: </label>
-//             <select
-//               value={category}
-//               onChange={(event) => setCategory(event.target.value)}
-//             >
-//               <option>Công nghệ</option>
-//               <option>Học tập</option>
-//               <option>Đời sống</option>
-//             </select>
-//           </p>
-
-//           <p>
-//             <label>Nội dung: </label>
-//             <textarea
-//               value={content}
-//               onChange={(event) => setContent(event.target.value)}
-//               required
-//             />
-//           </p>
-
-//           <button type="submit">Tạo bài viết</button>
-//         </form>
-//       )}
-//     </>
-//   );
-// }
