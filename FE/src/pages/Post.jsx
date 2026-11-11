@@ -1,14 +1,42 @@
-﻿import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { BlogPosts } from "../data/blogPosts";
+
 export function Post() {
     const { slug } = useParams()
-    const post = BlogPosts[slug]
-    if (!post) {
-        return <h2>The blog post you've requested doesn't exist.</h2>;
+    const [post, setPost] = useState(null);
+    const [status, setStatus] = useState("loading");
+    const [errorMessage, setErrorMessage] = useState("");
+
+    useEffect(() => {
+        async function loadPost() {
+            try {
+                const response = await fetch(`http://localhost:3000/posts/${slug}`);
+                if (!response.ok) {
+                    throw new Error(`API trả về lỗi ${response.status}`);
+                }
+
+                const result = await response.json();
+                setPost(result.data);
+                setStatus("success");
+            } catch {
+                setErrorMessage("Không tải được bài viết. Kiểm tra backend tại http://localhost:3000.");
+                setStatus("error");
+            }
+        }
+
+        loadPost();
+    }, [slug]);
+    if (status === "loading") {
+        return <p>Đang tải...</p>;
     }
 
+    if (status === "error") {
+        return <p>{errorMessage}</p>;
+    }
+
+    if (!post) {
+        return <p>Không tìm thấy bài viết.</p>;
+    }
     return (
         <div>
             <h3>{post.title}</h3>
