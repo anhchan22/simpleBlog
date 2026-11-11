@@ -5,7 +5,6 @@ import { Posts } from './pages/Posts'
 import { NoMatch } from './pages/NoMatch'
 import { Post } from './pages/Post'
 import { PostList } from './pages/PostList'
-import { Popular } from './pages/Popular'
 import {NewPost} from './pages/NewPost'
 import { Countries } from './pages/Countries'
 import { CountryDetail } from './pages/CountryDetail'
@@ -31,7 +30,6 @@ function App() {
           <Route index element={<PostList />} />
           <Route path=':slug' element={<Post />} />
           <Route path='new' element={<NewPost />} />
-          <Route path='popular' element={<Popular />} />
         </Route>
         <Route path='*' element={<NoMatch />} />
       </Routes >
