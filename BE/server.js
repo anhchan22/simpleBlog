@@ -1,31 +1,48 @@
 const express = require("express")
 const cors = require("cors")
 const countries = require("./data/countries")
-const blogPosts= require("./data/blogPosts")
+const connectDB = require("./config/db")
+const Post = require("./db/postModel")
+const User = require("./db/userModel")
 const app = express()
 const PORT = 3000
+connectDB()
 app.use(cors({
     origin : "http://localhost:5173"
 }))
 app.use(express.json())
 
+
 app.get("/", function(req, res){
     res.send("HEllO anhchan")
 })
 
-app.post("/login", function(req, res){
-    const {username, password} = req.body
-
-    if (username=="admin" && password=="123"){
-        return res.status(200).json({
-            message: "Dang nhap thanh cong",
-            user: { username }
-        })
+app.post("/register", async function(req, res){
+    const user = new User(req.body)
+    try {
+        await user.save()
+        res.send({ data: user })
+    } catch (error) {
+        res.status(500).send(error)
     }
+})
 
-    return res.status(401).json({
-        message: "Sai tai khoan hoac mat khau."
-    })
+app.post("/login", async function(req, res){
+    try {
+        const user = await User.findOne({
+            username: req.body.username,
+            password: req.body.password
+        })
+        if (!user) {
+            return res.status(401).json({ message: "Sai tai khoan hoac mat khau." })
+        }
+        res.status(200).json({
+            message: "Dang nhap thanh cong",
+            user: { username: user.username, name: user.name }
+        })
+    } catch (error) {
+        res.status(500).send(error)
+    }
 })
 
 
@@ -57,58 +74,45 @@ app.get("/countries/:id", function(req, res){
     })
 })
 
-app.get("/posts", function(req, res){
-    res.json({
-        message: "Lay danh sach bai dang thanh cong",
-        data: blogPosts
-    })
+app.get("/posts", async function(req, res){
+    try {
+        const posts = await Post.find({})
+        res.json({
+            message: "Lay danh sach bai dang thanh cong",
+            data: posts
+        })
+    } catch (error) {
+        res.status(500).send({ error })
+    }
 })
 
-app.get("/posts/:slug", function(req, res){
-    const slug = req.params.slug
-    const post = blogPosts.find((item)=> item.slug==slug)
-    if(!post){
-        return res.status(404).json({
-            message: "Khong tim thay post",
-            data: null
+app.get("/posts/:slug", async function(req, res){
+    try {
+        const post = await Post.findOne({ slug: req.params.slug })
+        if (!post) {
+            return res.status(404).json({
+                message: "Khong tim thay post",
+                data: null
+            })
+        }
+        res.status(200).json({
+            message: "Lay post thanh cong",
+            data: post
         })
+    } catch (error) {
+        res.status(500).send({ error })
     }
-    res.status(200).json({
-        message: "Lay post thanh cong",
-        data: post
-    })
 })
 
 
-app.post("/posts", function(req, res){
-    const {slug, title, description} = req.body
-    if(!slug || !title || !description){
-        return res.status(400).json({
-            message: "Missing required fields"
-        })
+app.post("/posts", async function(req, res){
+    const post = new Post(req.body)
+    try {
+        await post.save()
+        res.send({ data: post })
+    } catch (error) {
+        res.status(500).send(error)
     }
-
-    const exitingPost = blogPosts.find(function(i){
-        return i.slug==slug
-    })
-
-    if(exitingPost){
-        return res.status(409).json({
-            message: "Slug da ton tai"
-        })
-    }
-
-    const post = {
-        slug,
-        title,
-        description
-    }
-
-    blogPosts.push(post)
-    res.status(200).json({
-        message: "them post thanh cong",
-        data: post
-    })
 })
 
 app.listen(PORT, function(){
