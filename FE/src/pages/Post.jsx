@@ -102,6 +102,15 @@ export function Post({ user }) {
         setPost(result)
         setComment("")
     }
+
+    async function handleXoaComment(commentId) {
+        const response = await fetch(`http://localhost:3000/posts/${slug}/comments/${commentId}`, {
+            method: "delete"
+        })
+        const result = await response.json()
+        setPost(result)
+    }
+
     return (
         <div>
             {status == "loading" && <p>Dang tai bai viet...</p>}
@@ -133,10 +142,12 @@ export function Post({ user }) {
             }
 
             <h3>Binh luan</h3>
-            <form onSubmit={handleComment} >
-                <input type="text" value={comment} onChange={(e) => setComment(e.target.value)} />
-                <button>Gui</button>
-            </form>
+            {user && (
+                <form onSubmit={handleComment}>
+                    <input type="text" value={comment} onChange={(e) => setComment(e.target.value)} />
+                    <button>Gui</button>
+                </form>
+            )}
             {post.comments && post.comments.map((item, index) => (
                 <div key={index}>
                     <p>
@@ -144,7 +155,11 @@ export function Post({ user }) {
                         <br />
                         <small>{new Date(item.createdAt).toLocaleString("vi-VN")}</small>
                     </p>
-
+                    {user?.username === item.username && (
+                        <button type="button" onClick={() => handleXoaComment(item._id)}>
+                            Xóa bình luận
+                        </button>
+                    )}
                 </div>
             ))}
         </div>
@@ -159,8 +174,30 @@ export function Post({ user }) {
 
 
 
+    // async function handleReply(event, commentId) {
+    //     const text = event.target.elements.reply.value
 
+    //     const response = await fetch(`http://localhost:3000/posts/${slug}/comments/${commentId}/replies`, {
+    //         method: "post",
+    //         headers: { "Content-Type": "application/json" },
+    //         body: JSON.stringify({
+    //             username: user?.username,
+    //             name: user?.name,
+    //             text: text
+    //         })
+    //     })
 
+    //     const result = await response.json()
+    //     setPost(result)
+    //     event.target.reset()
+    // }
+
+// {user && (
+//     <form onSubmit={(event) => handleReply(event, item._id)}>
+//         <input type="text" name="reply" placeholder="Trả lời bình luận" />
+//         <button type="submit">Trả lời</button>
+//     </form>
+// )}
 // export function Post() {
 //   const [showForm, setShowForm] = useState(true);
 //   const { register, handleSubmit, reset } = useForm();

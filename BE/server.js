@@ -163,6 +163,31 @@ app.post("/posts/:slug/comments", async function (req, res) {
         res.status(500).send(error)
     }
 })
+
+app.delete("/posts/:slug/comments/:commentId", async function (req, res) {
+    const post = await Post.findOneAndUpdate(
+        { slug: req.params.slug },
+        { $pull: { comments: { _id: req.params.commentId } } },
+        { new: true }
+    )
+    res.send(post)
+})
 app.listen(PORT, function () {
     console.log(`Sever running at http://localhost:${PORT}`)
 })
+
+
+
+// app.post("/posts/:slug/comments/:commentId/replies", async function (req, res) {
+//     const post = await Post.findOne({ slug: req.params.slug })
+//     const comment = post.comments.id(req.params.commentId)
+
+//     comment.replies.push({
+//         username: req.body.username,
+//         name: req.body.name,
+//         text: req.body.text
+//     })
+
+//     await post.save()
+//     res.send(post)
+// })
