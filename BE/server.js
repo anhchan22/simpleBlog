@@ -8,16 +8,18 @@ const app = express()
 const PORT = 3000
 connectDB()
 app.use(cors({
-    origin : "http://localhost:5173"
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type"]
 }))
 app.use(express.json())
 
 
-app.get("/", function(req, res){
+app.get("/", function (req, res) {
     res.send("HEllO anhchan")
 })
 
-app.post("/register", async function(req, res){
+app.post("/register", async function (req, res) {
     const user = new User(req.body)
     try {
         await user.save()
@@ -27,7 +29,7 @@ app.post("/register", async function(req, res){
     }
 })
 
-app.post("/login", async function(req, res){
+app.post("/login", async function (req, res) {
     try {
         const user = await User.findOne({
             username: req.body.username,
@@ -46,35 +48,33 @@ app.post("/login", async function(req, res){
 })
 
 
-app.get("/countries", function(req, res){
+app.get("/countries", function (req, res) {
     res.json({
-        error : false,
-        message : "Lay danh sach thanh cong",
-        data : countries
+        error: false,
+        message: "Lay danh sach thanh cong",
+        data: countries
     })
 })
 
-app.get("/countries/:id", function(req, res){
+app.get("/countries/:id", function (req, res) {
     const id = Number(req.params.id)
-    const country = countries.find(function(item){
-        return item.id==id
+    const country = countries.find(function (item) {
+        return item.id == id
     })
-    if(!country){
+    if (!country) {
         return res.status(404).json({
-            error : true,
-            message : "Khong tim thay country",
-            data : null
+            error: true,
+            message: "Khong tim thay country"
         })
     }
-
     res.status(200).json({
-        error : false,
-        message : "Lay country thanh cong",
-        data : country
+        error: false,
+        message: "Lay country thanh cong",
+        data: country
     })
 })
 
-app.get("/posts", async function(req, res){
+app.get("/posts", async function (req, res) {
     try {
         const posts = await Post.find({})
         res.json({
@@ -86,13 +86,12 @@ app.get("/posts", async function(req, res){
     }
 })
 
-app.get("/posts/:slug", async function(req, res){
+app.get("/posts/:slug", async function (req, res) {
     try {
         const post = await Post.findOne({ slug: req.params.slug })
         if (!post) {
             return res.status(404).json({
-                message: "Khong tim thay post",
-                data: null
+                message: "Khong tim thay post"
             })
         }
         res.status(200).json({
@@ -105,7 +104,7 @@ app.get("/posts/:slug", async function(req, res){
 })
 
 
-app.post("/posts", async function(req, res){
+app.post("/posts", async function (req, res) {
     const post = new Post(req.body)
     try {
         await post.save()
@@ -115,6 +114,37 @@ app.post("/posts", async function(req, res){
     }
 })
 
-app.listen(PORT, function(){
+app.put("/posts/:slug", async function (req, res) {
+    try {
+        const post = await Post.findOne({ slug: req.params.slug })
+        if (!post) {
+            return res.status(404).json({
+                message: "Khong tim thay post"
+            })
+        }
+        post.title = req.body.title
+        post.description = req.body.description
+        await post.save()
+        res.status(201).send(post)
+    } catch (error) {
+        console.log("Sua that bai", error)
+        res.status(500).json({ message: "Sua bai viet that bai" })
+    }
+})
+
+app.delete("/posts/:slug", async function (req, res) {
+    try {
+        const post = await Post.findOneAndDelete({ slug: req.params.slug })
+        if (!post) {
+            return res.status(404).json({
+                message: "Khong tim thay post"
+            })
+        }
+        res.status(204).send()
+    } catch (error) {
+        res.send({ error })
+    }
+})
+app.listen(PORT, function () {
     console.log(`Sever running at http://localhost:${PORT}`)
 })

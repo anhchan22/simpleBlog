@@ -1,39 +1,128 @@
 ﻿import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-export function Post() {
+import { useNavigate, useParams } from "react-router-dom";
+export function Post({ user }) {
     const { slug } = useParams();
     const [post, setPost] = useState([])
-    const [err, setErr] = useState("")
     const [status, setStatus] = useState("loading")
+    const [editting, setEditting] = useState(false)
+    const [form, setForm] = useState({
+        title: "",
+        description: ""
+    })
+    const navigate = useNavigate()
+
     useEffect(() => {
         async function loadPost() {
             try {
                 const response = await fetch(`http://localhost:3000/posts/${slug}`);
-                if (!response.ok) {
-                    throw new Error("BE đang gặp lỗi.");
-                }
-
                 const result = await response.json();
-                console.log(result.data)
                 setPost(result.data);
+                setForm({
+                    title: result.data.title,
+                    description: result.data.description
+                })
                 setStatus("success")
             } catch {
-                setErr("Khong tai duoc bai viet. Kiem tra BE.")
                 setStatus("error")
             }
         }
         loadPost();
     }, [slug]);
 
+    function handleSua() {
+        setForm({
+            title: post.title,
+            description: post.description
+        })
+        setEditting(true)
+    }
+
+    async function handleXoa() {
+        try {
+            const response = await fetch(`http://localhost:3000/posts/${slug}`, {
+                method: "delete"
+            })
+            if (!response.ok) {
+                console.log("xoa bai viet that bai")
+            }
+            alert("xoa bai viet thanh cong")
+            navigate("/posts")
+        } catch (error) {
+            console.log("Loi, khong xoa duoc.")
+        }
+
+    }
+
+    function handleChange(event) {
+        const { name, value } = event.target
+        setForm((prev) => ({ ...prev, [name]: value }))
+    }
+
+    async function handleLuu(event) {
+        event.preventDefault()
+        try {
+            const response = await fetch(`http://localhost:3000/posts/${slug}`, {
+                method: "put",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(form)
+            })
+
+            const updatedPost = await response.json()
+            setPost(updatedPost.data ?? updatedPost)
+            setEditting(false)
+            navigate(`/posts/${slug}`)
+        } catch (error) {
+            console.error("Loi, khong sua duoc bai viet:", error)
+        }
+    }
+
+    function handleHuy() {
+        setEditting(false)
+    }
     return (
         <div>
-            {status=="loading" && <p>Dang tai bai viet...</p>}
-            {status=="error" && <p>{err}</p>}
-            <h3>{post.title}</h3>
-            <p>{post.description}</p>
+            {status == "loading" && <p>Dang tai bai viet...</p>}
+            {status == "error" && <p>Loi Backend</p>}
+            {editting && user ? (
+                <form onSubmit={handleLuu}>
+                    <br />
+                    <label>Title:</label>
+                    <input type="text" name="title" value={form.title} onChange={handleChange} />
+                    <br />
+                    <label>Description:</label>
+                    <input type="text" name="description" value={form.description} onChange={handleChange} />
+                    <br />
+                    <button type="submit">Luu</button>
+                    <button type="button" onClick={handleHuy}>Huy</button>
+                </form>
+            ) : (
+                <>
+                    <h3>{post.title}</h3>
+                    <p>{post.description}</p>
+                    {user && (
+                        <>
+                            <button onClick={handleSua}>Sửa</button>
+                            <button onClick={handleXoa}>Xóa</button>
+                        </>
+                    )}
+                </>
+            )
+            }
+
         </div>
     )
 }
+
+
+
+
+
+
+
+
+
+
+
 // export function Post() {
 //   const [showForm, setShowForm] = useState(true);
 //   const { register, handleSubmit, reset } = useForm();
