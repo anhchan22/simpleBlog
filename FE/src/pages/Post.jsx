@@ -10,6 +10,7 @@ export function Post({ user }) {
         description: ""
     })
     const navigate = useNavigate()
+    const [comment, setComment] = useState("")
 
     useEffect(() => {
         async function loadPost() {
@@ -79,6 +80,28 @@ export function Post({ user }) {
     function handleHuy() {
         setEditting(false)
     }
+
+    async function handleComment(event) {
+        event.preventDefault()
+        const response = await fetch(`http://localhost:3000/posts/${slug}/comments`, {
+            method: "post",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username: user?.username,
+                name: user?.name,
+                text: comment
+            })
+        })
+
+        if (!response.ok) {
+            console.log("Them binh luan that bai")
+            return
+        }
+
+        const result = await response.json()
+        setPost(result)
+        setComment("")
+    }
     return (
         <div>
             {status == "loading" && <p>Dang tai bai viet...</p>}
@@ -109,6 +132,21 @@ export function Post({ user }) {
             )
             }
 
+            <h3>Binh luan</h3>
+            <form onSubmit={handleComment} >
+                <input type="text" value={comment} onChange={(e) => setComment(e.target.value)} />
+                <button>Gui</button>
+            </form>
+            {post.comments && post.comments.map((item, index) => (
+                <div key={index}>
+                    <p>
+                        <b>{item.name}: </b> {item.text}
+                        <br />
+                        <small>{new Date(item.createdAt).toLocaleString("vi-VN")}</small>
+                    </p>
+
+                </div>
+            ))}
         </div>
     )
 }

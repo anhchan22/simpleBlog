@@ -145,6 +145,24 @@ app.delete("/posts/:slug", async function (req, res) {
         res.send({ error })
     }
 })
+
+app.post("/posts/:slug/comments", async function (req, res) {
+    try {
+        const post = await Post.findOne({ slug: req.params.slug })
+        if (!post) {
+            return res.status(404).send("Khong tim thay post")
+        }
+        post.comments.push({
+            username: req.body.username,
+            name: req.body.name,
+            text: req.body.text
+        })
+        await post.save()
+        res.send(post)
+    } catch (error) {
+        res.status(500).send(error)
+    }
+})
 app.listen(PORT, function () {
     console.log(`Sever running at http://localhost:${PORT}`)
 })
